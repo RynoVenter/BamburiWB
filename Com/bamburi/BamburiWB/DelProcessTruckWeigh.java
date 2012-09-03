@@ -260,20 +260,20 @@ public class DelProcessTruckWeigh extends VtiUserExit
 			{
 				if(scrFWeight.getFieldValue().length() == 0 && scrFWeight1.getFieldValue().length() == 0)
 					return new VtiUserExitResult(999, "No weight retrieved from weigh bridge.");
-				scrFWeight1.setFieldValue(scrFWeight.getFieldValue() + scrFWeight1.getFieldValue());
+				scrFWeight1.setIntegerFieldValue(scrFWeight.getIntegerFieldValue() + scrFWeight1.getIntegerFieldValue());
 				scrFWTStamp1.setFieldValue(weighTS);
 				return new VtiUserExitResult(999, "Partial weight collected, move truck and take the next weight. Remember to select ''Full'' when taking the last weight.");
 			}
 			
 			if(scrRBFull.getFieldValue().equalsIgnoreCase("X") && scrFWeight1.getFieldValue().length()!=0)
 			{
-				scrFWeight1.setFieldValue(scrFWeight.getFieldValue() + scrFWeight1.getFieldValue());
+				scrFWeight1.setIntegerFieldValue(scrFWeight.getIntegerFieldValue() + scrFWeight1.getIntegerFieldValue());
 				scrFWTStamp1.setFieldValue(weighTS);
 			}
 			
 			if(scrRBFull.getFieldValue().equalsIgnoreCase("X") && scrFWeight1.getFieldValue().length()==0)
 			{
-				scrFWeight1.setFieldValue(scrFWeight.getFieldValue());			
+				scrFWeight1.setIntegerFieldValue(scrFWeight.getIntegerFieldValue());			
 				scrFWTStamp1.setFieldValue(weighTS);
 			}
 			
@@ -537,20 +537,20 @@ public class DelProcessTruckWeigh extends VtiUserExit
 			{
 				if(scrFWeight.getFieldValue().length() == 0 && scrFWeight2.getFieldValue().length() == 0)
 					return new VtiUserExitResult(999, "No weight retrieved from weigh bridge.");
-				scrFWeight2.setFieldValue(scrFWeight.getFieldValue() + scrFWeight2.getFieldValue());
+				scrFWeight2.setIntegerFieldValue(scrFWeight.getIntegerFieldValue() + scrFWeight2.getIntegerFieldValue());
 				scrFWTStamp2.setFieldValue(weighTS);
 				return new VtiUserExitResult(999, "Partial weight collected, move truck and take the next weight. Remeber to select Full when taking the last weight..");
 			}
 			
 			if(scrRBFull.getFieldValue().equalsIgnoreCase("X") && scrFWeight2.getFieldValue().length()!=0)
 			{
-				scrFWeight2.setFieldValue(scrFWeight.getFieldValue() + scrFWeight2.getFieldValue());
+				scrFWeight2.setIntegerFieldValue(scrFWeight.getIntegerFieldValue() + scrFWeight2.getIntegerFieldValue());
 				scrFWTStamp2.setFieldValue(weighTS);
 			}
 			
 			if(scrRBFull.getFieldValue().equalsIgnoreCase("X") && scrFWeight2.getFieldValue().length()==0)
 			{
-				scrFWeight2.setFieldValue(scrFWeight.getFieldValue());	
+				scrFWeight2.setIntegerFieldValue(scrFWeight.getIntegerFieldValue());	
 				scrFWTStamp2.setFieldValue(weighTS);
 			}
 			
@@ -559,7 +559,7 @@ public class DelProcessTruckWeigh extends VtiUserExit
 			{
 				if(scrFWeight.getFieldValue().length() == 0 && scrFWeight2.getFieldValue().length() == 0)
 					return new VtiUserExitResult(999, "No weight retrieved from weigh bridge.");
-				scrFWeight2.setFieldValue(scrFWeight.getFieldValue());
+				scrFWeight2.setIntegerFieldValue(scrFWeight.getIntegerFieldValue());
 				scrFWTStamp2.setFieldValue(weighTS);
 			}
 			

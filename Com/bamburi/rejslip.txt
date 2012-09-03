@@ -1,0 +1,29 @@
+
+
+
+
+
+
+
+	R E J E C T I O N   S L I P
+
+	Reject Time	:  &soTime&
+ 
+	Truck Number	:  &truck&				   
+	Type		:  &pType&	
+	Rejection Reason:  &rejreason&
+	Allocated Whgt	:  &allocWght&
+	Order #		:  &product&
+	
+
+
+
+
+
+
+			    1st Weight	&w1&  	
+			    2nd Weight	&w2&   	
+   			      		&nett&  Packing Line : &pl&	 
+
+
+	Signature : &user&		&driver& Signature	 

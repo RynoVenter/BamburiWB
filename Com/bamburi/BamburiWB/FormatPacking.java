@@ -37,6 +37,7 @@ public class FormatPacking extends VtiUserExit
 		VtiExitLdbTable icILdbTable = getLdbTable("YSWB_IC_ITEMS");
 		VtiExitLdbTable statusLdbTable = getLdbTable("YSWB_STATUS");
 		VtiExitLdbTable packingLdbTable = getLdbTable("YSWB_PACKING");
+		VtiExitLdbTable wbLdbTable = getLdbTable("YSWB_WB");
 		
 		if(bagsLdbTable == null) return new VtiUserExitResult(999,"Local database table YSWB_BAGS did not load properly.");
 		if(soLdbTable == null) return new VtiUserExitResult(999,"Local database table YSWB_SO_HEADER did not load properly.");
@@ -65,6 +66,11 @@ public class FormatPacking extends VtiUserExit
 				currItem.addPossibleValue("BAGDESC",itemsLdbRows[r].getFieldValue("MATNR") + ":" + itemsLdbRows[r].getFieldValue("MAKTX"));
 			}
 		}
+		
+		VtiExitLdbOrderSpecification [] orderBy = 
+				{
+					new VtiExitLdbOrderSpecification("VTIREF",true),
+				};
 		
 		if(scrTruckReg.getFieldValue().length() == 0)
 		{
@@ -142,87 +148,235 @@ public class FormatPacking extends VtiUserExit
 			
 			for(int s = 0;s < soHeaderLdbRows.length;s++)
 			{
-				blnAdd2List = true;
-					
-				VtiExitLdbSelectCriterion [] soItemSelConds = 
+				if(soHeaderLdbRows[s].getFieldValue("VBELN").length() > 0)
 				{
-					new VtiExitLdbSelectCondition("SERVERGRP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
-						new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
-							new VtiExitLdbSelectCondition("VBELN", VtiExitLdbSelectCondition.EQ_OPERATOR, soHeaderLdbRows[s].getFieldValue("VBELN")),
-								new VtiExitLdbSelectCondition("MTART", VtiExitLdbSelectCondition.NE_OPERATOR, "DIEN"),
-								new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
-				};
+					VtiExitLdbSelectCriterion [] soIPSelConds = 
+					{
+						new VtiExitLdbSelectCondition("SERVERGRP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
+							new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
+								new VtiExitLdbSelectCondition("VBELN", VtiExitLdbSelectCondition.EQ_OPERATOR, soHeaderLdbRows[s].getFieldValue("VBELN")),
+									new VtiExitLdbSelectCondition("MTART", VtiExitLdbSelectCondition.NE_OPERATOR,  "DIEN"),
+										new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
+					};
         
-				VtiExitLdbSelectConditionGroup soItemSelCondGrp = new VtiExitLdbSelectConditionGroup(soItemSelConds, true);
-				VtiExitLdbTableRow[] soItemsLdbRows = soILdbTable.getMatchingRows(soItemSelCondGrp);	
-								
-					for(int si = 0; si < soItemsLdbRows.length;si++)
-					{						
-						for(int c = 0;c < exclMatLdbRows.length;c++)
+					VtiExitLdbSelectConditionGroup soIPSelCondGrp = new VtiExitLdbSelectConditionGroup(soIPSelConds, true);
+					VtiExitLdbTableRow[] soIPLdbRows = soILdbTable.getMatchingRows(soIPSelCondGrp);
+					
+					Log.trace(0, "SI length + " + soIPLdbRows.length + " for " +  soHeaderLdbRows[s].getFieldValue("VBELN") + " on loop " + s);
+			
+					//only add if wb recs is more than the pack recs
+					VtiExitLdbSelectCriterion [] packingSelConds = 
+					{
+						new VtiExitLdbSelectCondition("SERVERGRP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
+							new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
+								new VtiExitLdbSelectCondition("TRUCKREG", VtiExitLdbSelectCondition.EQ_OPERATOR, soHeaderLdbRows[s].getFieldValue("TRUCK")),
+									new VtiExitLdbSelectCondition("VBELN", VtiExitLdbSelectCondition.EQ_OPERATOR, soHeaderLdbRows[s].getFieldValue("VBELN")),
+										new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
+
+					};
+        
+					VtiExitLdbSelectConditionGroup packingSelCondGrp = new VtiExitLdbSelectConditionGroup(packingSelConds, true);
+					VtiExitLdbTableRow[] packingLdbRows = packingLdbTable.getMatchingRows(packingSelCondGrp);
+				
+					VtiExitLdbSelectCriterion [] wbSelConds = 
+					{
+						new VtiExitLdbSelectCondition("SERVERGROUP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
+							new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
+								new VtiExitLdbSelectCondition("TRUCKREG", VtiExitLdbSelectCondition.EQ_OPERATOR, soHeaderLdbRows[s].getFieldValue("TRUCK")),
+									new VtiExitLdbSelectCondition("VBELN", VtiExitLdbSelectCondition.EQ_OPERATOR, soHeaderLdbRows[s].getFieldValue("VBELN")),
+										new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
+
+					};
+        
+					VtiExitLdbSelectConditionGroup wbSelCondGrp = new VtiExitLdbSelectConditionGroup(wbSelConds, true);
+					VtiExitLdbTableRow[] wbLdbRows = wbLdbTable.getMatchingRows(wbSelCondGrp, orderBy);
+							
+							
+					blnAdd2List = true;
+					if(	wbLdbRows.length > 0)
+					{
+						Log.trace(0,"Packing format result condition 1 wb length " + wbLdbRows.length + " packing length " +  (packingLdbRows.length + "/" + soIPLdbRows.length ) + " truck " + soHeaderLdbRows[s].getFieldValue("TRUCK"));
+						Log.trace(0,"Packing format result condition 2 status " + wbLdbRows[wbLdbRows.length -1].getFieldValue("STATUS"));
+						Log.trace(0,"Order " + soHeaderLdbRows[s].getFieldValue("VBELN"));
+
+						
+						if(wbLdbRows.length > (packingLdbRows.length / soIPLdbRows.length ) || 
+						   (wbLdbRows[wbLdbRows.length -1].getFieldValue("STATUS").equalsIgnoreCase("REJECTED") && wbLdbRows.length >= (packingLdbRows.length / soIPLdbRows.length )))
 						{
-							if(soItemsLdbRows[si].getFieldValue("MATNR").equalsIgnoreCase(exclMatLdbRows[c].getFieldValue("KEYVAL1")))
-								blnAdd2List = false;
+							VtiExitLdbSelectCriterion [] soItemSelConds = 
+							{
+								new VtiExitLdbSelectCondition("SERVERGRP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
+									new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
+										new VtiExitLdbSelectCondition("VBELN", VtiExitLdbSelectCondition.EQ_OPERATOR, soHeaderLdbRows[s].getFieldValue("VBELN")),
+											new VtiExitLdbSelectCondition("MTART", VtiExitLdbSelectCondition.NE_OPERATOR, "DIEN"),
+											new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
+							};
+        
+							VtiExitLdbSelectConditionGroup soItemSelCondGrp = new VtiExitLdbSelectConditionGroup(soItemSelConds, true);
+							VtiExitLdbTableRow[] soItemsLdbRows = soILdbTable.getMatchingRows(soItemSelCondGrp);	
+											
+								for(int si = 0; si < soItemsLdbRows.length;si++)
+								{	
+									for(int c = 0;c < exclMatLdbRows.length;c++)
+									{
+										if(soItemsLdbRows[si].getFieldValue("MATNR").equalsIgnoreCase(exclMatLdbRows[c].getFieldValue("KEYVAL1")))
+											blnAdd2List = false;
+									}
+								}
+				
+							if(blnAdd2List)
+								scrTruckReg.addPossibleValue(soHeaderLdbRows[s].getFieldValue("TRUCK"));
 						}
 					}
-				
-				if(blnAdd2List)
-					scrTruckReg.addPossibleValue(soHeaderLdbRows[s].getFieldValue("TRUCK"));
+				}
 			}
-			
+	//non sales order		
 			for(int r = 0;r < statusLdbRows.length;r++)
 			{
+				//only add if wb recs is more than the pack recs
+				VtiExitLdbSelectCriterion [] packingSelConds = 
+				{
+					new VtiExitLdbSelectCondition("SERVERGRP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
+						new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
+							new VtiExitLdbSelectCondition("TRUCKREG", VtiExitLdbSelectCondition.EQ_OPERATOR, statusLdbRows[r].getFieldValue("TRUCKREG")),
+								new VtiExitLdbSelectCondition("EBELN", VtiExitLdbSelectCondition.EQ_OPERATOR, statusLdbRows[r].getFieldValue("EBELN")),
+									new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
+
+				};
+        
+				VtiExitLdbSelectConditionGroup packingSelCondGrp = new VtiExitLdbSelectConditionGroup(packingSelConds, true);
+				VtiExitLdbTableRow[] packingLdbRows = packingLdbTable.getMatchingRows(packingSelCondGrp);
+				
+				VtiExitLdbSelectCriterion [] wbSelConds = 
+				{
+					new VtiExitLdbSelectCondition("SERVERGROUP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
+						new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
+							new VtiExitLdbSelectCondition("TRUCKREG", VtiExitLdbSelectCondition.EQ_OPERATOR, statusLdbRows[r].getFieldValue("TRUCKREG")),
+								new VtiExitLdbSelectCondition("STOCKTRNF", VtiExitLdbSelectCondition.EQ_OPERATOR, statusLdbRows[r].getFieldValue("EBELN")),
+									new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
+
+				};
+        
+				VtiExitLdbSelectConditionGroup wbSelCondGrp = new VtiExitLdbSelectConditionGroup(wbSelConds, true);
+				VtiExitLdbTableRow[] wbLdbRows = wbLdbTable.getMatchingRows(wbSelCondGrp, orderBy);
+						
+						
+				blnAdd2List = true;
+				//check if stoc trans
+				if(	wbLdbRows.length > 0 && statusLdbRows[r].getFieldValue("STOCKTRNF").length() > 0)
+				{
+					
+					Log.trace(0,"Packing format result condition 1 wb length " + wbLdbRows.length + " packing length " +  packingLdbRows.length + " truck " + statusLdbRows[r].getFieldValue("TRUCKREG"));
+					Log.trace(0,"Packing format result condition 2 status " + wbLdbRows[wbLdbRows.length -1].getFieldValue("STATUS"));
+					Log.trace(0,"Order " + statusLdbRows[r].getFieldValue("STOCKTRNF"));
+					
+					if(wbLdbRows.length > packingLdbRows.length || 
+					   (wbLdbRows[wbLdbRows.length -1].getFieldValue("STATUS").equalsIgnoreCase("REJECTED") && wbLdbRows.length >= packingLdbRows.length))
+					{
+						VtiExitLdbSelectCriterion [] stoItemSelConds = 
+						{
+							new VtiExitLdbSelectCondition("SERVERGRP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
+								new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
+									new VtiExitLdbSelectCondition("EBELN", VtiExitLdbSelectCondition.EQ_OPERATOR, statusLdbRows[r].getFieldValue("STOCKTRNF")),
+										new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
+						};
+        
+						VtiExitLdbSelectConditionGroup stoItemSelCondGrp = new VtiExitLdbSelectConditionGroup(stoItemSelConds, true);
+						VtiExitLdbTableRow[] stoItemsLdbRows = stoILdbTable.getMatchingRows(stoItemSelCondGrp);	
+				
+						Log.trace(0, "STO record count = " + stoItemsLdbRows.length + " for " + statusLdbRows[r].getFieldValue("STOCKTRNF"));
+						
+						if(stoItemsLdbRows.length > 0)
+						{
+							for(int sti = 0; sti < stoItemsLdbRows.length;sti++)
+							{						
+								for(int c = 0;c < exclMatLdbRows.length;c++)
+								{
+									if(stoItemsLdbRows[sti].getFieldValue("MATNR").equalsIgnoreCase(exclMatLdbRows[c].getFieldValue("KEYVAL1")))
+										blnAdd2List = false;
+									
+								}
+							}
+						}
+						
+						if(blnAdd2List)
+							scrTruckReg.addPossibleValue(statusLdbRows[r].getFieldValue("TRUCKREG"));
+					}
+				}
+				
 				blnAdd2List = true;
 				
-				VtiExitLdbSelectCriterion [] stoItemSelConds = 
+				Log.trace(0,"Add to list? true");
+				
+				//only add if wb recs is more than the pack recs
+				VtiExitLdbSelectCriterion [] packingICSelConds = 
 				{
 					new VtiExitLdbSelectCondition("SERVERGRP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
 						new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
-							new VtiExitLdbSelectCondition("EBELN", VtiExitLdbSelectCondition.EQ_OPERATOR, statusLdbRows[r].getFieldValue("STOCKTRNF")),
-								new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
-				};
-        
-				VtiExitLdbSelectConditionGroup stoItemSelCondGrp = new VtiExitLdbSelectConditionGroup(stoItemSelConds, true);
-				VtiExitLdbTableRow[] stoItemsLdbRows = stoILdbTable.getMatchingRows(stoItemSelCondGrp);	
-				
-				if(stoItemsLdbRows.length > 0)
-				{
-					for(int sti = 0; sti < stoItemsLdbRows.length;sti++)
-					{						
-						for(int c = 0;c < exclMatLdbRows.length;c++)
-						{
+							new VtiExitLdbSelectCondition("TRUCKREG", VtiExitLdbSelectCondition.EQ_OPERATOR, statusLdbRows[r].getFieldValue("TRUCKREG")),
+								new VtiExitLdbSelectCondition("DELIVDOC", VtiExitLdbSelectCondition.EQ_OPERATOR, statusLdbRows[r].getFieldValue("DELIVDOC")),
+									new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
 
-							if(stoItemsLdbRows[sti].getFieldValue("MATNR").equalsIgnoreCase(exclMatLdbRows[c].getFieldValue("KEYVAL1")))
-								blnAdd2List = false;
-							
-						}
-					}
-				}
-				
-				VtiExitLdbSelectCriterion [] icItemSelConds = 
-				{
-					new VtiExitLdbSelectCondition("SERVERGRP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
-						new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
-							new VtiExitLdbSelectCondition("VBELN", VtiExitLdbSelectCondition.EQ_OPERATOR, statusLdbRows[r].getFieldValue("DELIVDOC")),
-								new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
 				};
         
-				VtiExitLdbSelectConditionGroup icItemSelCondGrp = new VtiExitLdbSelectConditionGroup(icItemSelConds, true);
-				VtiExitLdbTableRow[] icItemsLdbRows = icILdbTable.getMatchingRows(icItemSelCondGrp);	
-								
-				if(icItemsLdbRows.length > 0)
+				VtiExitLdbSelectConditionGroup packingICSelCondGrp = new VtiExitLdbSelectConditionGroup(packingICSelConds, true);
+				VtiExitLdbTableRow[] packingICLdbRows = packingLdbTable.getMatchingRows(packingICSelCondGrp);
+				
+				VtiExitLdbSelectCriterion [] wbICSelConds = 
 				{
-					for(int ic = 0; ic < icItemsLdbRows.length;ic++)
-					{						
-						for(int c = 0;c < exclMatLdbRows.length;c++)
+					new VtiExitLdbSelectCondition("SERVERGROUP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
+						new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
+							new VtiExitLdbSelectCondition("TRUCKREG", VtiExitLdbSelectCondition.EQ_OPERATOR, statusLdbRows[r].getFieldValue("TRUCKREG")),
+								new VtiExitLdbSelectCondition("DELIVDOC", VtiExitLdbSelectCondition.EQ_OPERATOR, statusLdbRows[r].getFieldValue("DELIVDOC")),
+									new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
+
+				};
+        
+				VtiExitLdbSelectConditionGroup wbICSelCondGrp = new VtiExitLdbSelectConditionGroup(wbICSelConds, true);
+				VtiExitLdbTableRow[] wbICLdbRows = wbLdbTable.getMatchingRows(wbICSelCondGrp, orderBy);
+				Log.trace(0,"Checking IC");					
+				if(	wbICLdbRows.length > 0 && statusLdbRows[r].getFieldValue("DELIVDOC").length() > 0)
+				{
+					
+					Log.trace(0,"IC Packing format result condition 1 wb length " + wbLdbRows.length + " packing length " +  packingLdbRows.length + " truck " + statusLdbRows[r].getFieldValue("TRUCKREG"));
+					Log.trace(0,"IC Packing format result condition 2 status " + wbLdbRows[wbLdbRows.length -1].getFieldValue("STATUS"));
+					Log.trace(0,"IC Order " + statusLdbRows[r].getFieldValue("DELIVDOC"));
+					
+					if(wbICLdbRows.length > packingICLdbRows.length || 
+					   (wbICLdbRows[wbICLdbRows.length -1].getFieldValue("STATUS").equalsIgnoreCase("REJECTED") && wbICLdbRows.length >= packingICLdbRows.length))
+					{
+						
+						Log.trace(0, "Checking if bulk ic.");
+						VtiExitLdbSelectCriterion [] icItemSelConds = 
 						{
-							if(icItemsLdbRows[ic].getFieldValue("MATNR").equalsIgnoreCase(exclMatLdbRows[c].getFieldValue("KEYVAL1")))
-								blnAdd2List = false;
+							new VtiExitLdbSelectCondition("SERVERGRP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
+								new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
+									new VtiExitLdbSelectCondition("VBELN", VtiExitLdbSelectCondition.EQ_OPERATOR, statusLdbRows[r].getFieldValue("DELIVDOC")),
+										new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
+						};
+        
+						VtiExitLdbSelectConditionGroup icItemSelCondGrp = new VtiExitLdbSelectConditionGroup(icItemSelConds, true);
+						VtiExitLdbTableRow[] icItemsLdbRows = icILdbTable.getMatchingRows(icItemSelCondGrp);	
+					
+						
+						if(icItemsLdbRows.length > 0)
+						{
+							for(int ic = 0; ic < icItemsLdbRows.length;ic++)
+							{						
+								for(int c = 0;c < exclMatLdbRows.length;c++)
+								{
+									if(icItemsLdbRows[ic].getFieldValue("MATNR").equalsIgnoreCase(exclMatLdbRows[c].getFieldValue("KEYVAL1")))
+									{Log.trace(0,"Add to list? false");
+										blnAdd2List = false;
+									}
+								}
+							}
 						}
+							
+						if(blnAdd2List)
+							scrTruckReg.addPossibleValue(statusLdbRows[r].getFieldValue("TRUCKREG"));
 					}
 				}
-					
-				if(blnAdd2List)
-					scrTruckReg.addPossibleValue(statusLdbRows[r].getFieldValue("TRUCKREG"));
 			}
 		}
 					

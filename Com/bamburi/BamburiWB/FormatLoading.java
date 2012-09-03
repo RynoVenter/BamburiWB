@@ -164,9 +164,10 @@ public class FormatLoading extends VtiUserExit
 				VtiExitLdbSelectConditionGroup loadSelCondGrp = new VtiExitLdbSelectConditionGroup(loadSelConds, true);
 				VtiExitLdbTableRow[] loadLdbRows = loadingLdbTable.getMatchingRows(loadSelCondGrp);
 			
-			
 				if(loadLdbRows.length < packingLdbRows.length)
+				{
 					scrTruckReg.addPossibleValue(soHeaderLdbRows[s].getFieldValue("TRUCK"));
+				}
 			}
 			
 			for(int r = 0;r<statusLdbRows.length;r++)
@@ -189,22 +190,35 @@ public class FormatLoading extends VtiUserExit
 						new VtiExitLdbSelectCondition("SERVERGRP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
 							new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
 								new VtiExitLdbSelectCondition("VBELN", VtiExitLdbSelectCondition.EQ_OPERATOR, statusLdbRows[r].getFieldValue("DELIVDOC")),
-									new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
+									//new VtiExitLdbSelectCondition("TRUCKREG", VtiExitLdbSelectCondition.EQ_OPERATOR, statusLdbRows[r].getFieldValue("TRUCKREG")),
+										new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
 				};
 		        
 				VtiExitLdbSelectConditionGroup icSelCondGrp = new VtiExitLdbSelectConditionGroup(icSelConds, true);
 				VtiExitLdbTableRow[] icLdbRows = icItemsLdb.getMatchingRows(icSelCondGrp);
+				
+				Log.trace(0,"PO Length " + poLdbRows.length);
+				Log.trace(0,statusLdbRows[r].getFieldValue("EBELN"));
+				
 				if(poLdbRows.length > 0)
 				{
 					docType = "EBELN";
 					packDocType = "EBELN";
+					Log.trace(0,"PO  " + packDocType);
+	
 				}
+				
+				Log.trace(0,"IC Length " + icLdbRows.length);
+				Log.trace(0,statusLdbRows[r].getFieldValue("DELIVDOC"));
+				
 				if(icLdbRows.length > 0)
 				{
 					docType = "DELIVDOC";
 					packDocType = "DELIVDOC";
+					Log.trace(0,"IC  " + packDocType);
+
 				}
-		
+				
 				if(docType != null)
 				{
 					if(docType.length() > 4)
@@ -236,13 +250,23 @@ public class FormatLoading extends VtiUserExit
 						VtiExitLdbSelectConditionGroup loadSelCondGrp = new VtiExitLdbSelectConditionGroup(loadSelConds, true);
 						VtiExitLdbTableRow[] loadLdbRows = loadingLdbTable.getMatchingRows(loadSelCondGrp);
 					
-					
+						Log.trace(0,"");
+						Log.trace(0,statusLdbRows[r].getFieldValue("TRUCKREG"));
+						Log.trace(0,docType);
+						Log.trace(0,packDocType);
+						Log.trace(0,statusLdbRows[r].getFieldValue(packDocType));
+						Log.trace(0,statusLdbRows[r].getFieldValue("VTIREF"));
+						
+						Log.trace(0, " Load L " + loadLdbRows.length + " Pack L " + packingLdbRows.length + " Truck" + statusLdbRows[r].getFieldValue("TRUCKREG"));
 						if(loadLdbRows.length < packingLdbRows.length)
+						{
 							scrTruckReg.addPossibleValue(statusLdbRows[r].getFieldValue("TRUCKREG"));
+						}
 					}
-				
 				}
+				
 				docType = null;
+				packDocType = null;
 			}
 		}
 					

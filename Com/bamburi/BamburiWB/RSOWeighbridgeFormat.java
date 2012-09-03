@@ -706,37 +706,9 @@ public class RSOWeighbridgeFormat extends VtiUserExit
 			    
 					VtiExitLdbSelectConditionGroup wbSelCondGrp = new VtiExitLdbSelectConditionGroup(wbSelConds, true);
 					VtiExitLdbTableRow[] wbLdbRows = wbLdbTable.getMatchingRows(wbSelCondGrp);
-				
-					VtiExitLdbSelectCriterion [] wbRejSelConds = 
-					{
-							new VtiExitLdbSelectCondition("SERVERGROUP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
-								new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
-									new VtiExitLdbSelectCondition("VBELN", VtiExitLdbSelectCondition.EQ_OPERATOR, scrTblItems.getRow(c).getFieldValue("VBELN_I")),
-										new VtiExitLdbSelectCondition("TRUCKREG", VtiExitLdbSelectCondition.EQ_OPERATOR, scrTruckReg.getFieldValue()),
-											new VtiExitLdbSelectCondition("STATUS", VtiExitLdbSelectCondition.EQ_OPERATOR, "REJECTED"),
-							new VtiExitLdbSelectCondition("PACKLOADER", VtiExitLdbSelectCondition.EQ_OPERATOR, scrWFSalesOrd.getFieldValue()),
-										new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
-					};
-			    
-					VtiExitLdbSelectConditionGroup wbRejSelCondGrp = new VtiExitLdbSelectConditionGroup(wbRejSelConds, true);
-					VtiExitLdbTableRow[] wbRejLdbRows = wbLdbTable.getMatchingRows(wbRejSelCondGrp);
-
-					int rejCom = 0;
-				
-					if(wbRejLdbRows.length == 0)
-					{
-						rejCom = 0;
-					}
-					else if(wbLdbRows.length > 0)
-						if(wbLdbRows[wbLdbRows.length-1].getFieldValue("STATUS").equalsIgnoreCase("REJECTED"))
-					{
-						rejCom = 1;
-					}
-					else
-					{
-						rejCom = 0;
-					}
 					
+					Log.trace(0,"wb count " + wbLdbRows.length + " for order " + scrTblItems.getRow(c).getFieldValue("VBELN_I"));
+									
 					//Packing LDB Count 
 									
 						VtiExitLdbSelectCriterion [] packingQSelConds = 
@@ -755,11 +727,14 @@ public class RSOWeighbridgeFormat extends VtiUserExit
 						VtiExitLdbSelectConditionGroup packingQSelCondGrp = new VtiExitLdbSelectConditionGroup(packingQSelConds, true);
 
 						VtiExitLdbTableRow[] packingQTLdbRows = packingLdbTable.getMatchingRows(packingQSelCondGrp);
-									
+						
+						Log.trace(0,"packingQTLdbRows count " + packingQTLdbRows.length + " for order " + scrTblItems.getRow(c).getFieldValue("VBELN_I"));
+						
+						int pPos = 10;	
+						
 						for(int ip = 0;ip < packingQTLdbRows.length;ip++)
 						{
-							int pPos = 10;
-						
+							Log.trace(0,"ip = " + ip);
 							for(int i = 0;i < packingQTLdbRows.length;i++)
 							{
 								if(packingQTLdbRows[i].getIntegerFieldValue("POSNR") == pPos)
@@ -767,15 +742,13 @@ public class RSOWeighbridgeFormat extends VtiUserExit
 									pRecs++;
 								}
 							}
-						
-							if(wbLdbRows.length + rejCom> pRecs)
-							{
-								 
-								  btnSave.setHiddenFlag(true);
-								  return new VtiUserExitResult(999,1,"Packing has not been done for line " + pPos + " of Sales Order " +  scrTblItems.getRow(c).getFieldValue("VBELN_I") + ".");
-							}
-													
-							pPos += 10;
+								if(wbLdbRows.length > pRecs)
+								{
+									  Log.trace(0,"wbLdbRows count " + wbLdbRows.length +  " > " + pRecs + " for order " + scrTblItems.getRow(c).getFieldValue("VBELN_I"));
+									  btnSave.setHiddenFlag(true);
+									  return new VtiUserExitResult(999,1,"Packing has not been done for line " + pPos + " of Sales Order " +  scrTblItems.getRow(c).getFieldValue("VBELN_I") + ".");
+								
+							}							
 						}
 					
 					

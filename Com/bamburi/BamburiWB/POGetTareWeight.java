@@ -89,13 +89,13 @@ public class POGetTareWeight extends VtiUserExit
 			docType = "STOCKTRNF";
 		}
 		
-		if(scrRBWeigh1.getFieldValue().equalsIgnoreCase("X"))
+		if(scrRBWeigh1.getFieldValue().equalsIgnoreCase("X") && !sessionHeader.getFunctionId().equalsIgnoreCase("YSWB_WEIGH_COMP"))
 		{
 			if(!scrTblItems.getTopRow().getFieldValue("KEY").equalsIgnoreCase("X"))
 				return new VtiUserExitResult(999, 1, "Please validate the quantity for " + scrWFPurchOrd.getFieldValue() + ".");
 		}
 		
-		if(scrCscIntervention.getFieldValue().equalsIgnoreCase("X"))
+		if(scrCscIntervention.getFieldValue().equalsIgnoreCase("X") && !sessionHeader.getFunctionId().equalsIgnoreCase("YSWB_WEIGH_COMP"))
 		{
 			sessionHeader.setNextFunctionId("YSWB_POQTYCHECK");
 				return new VtiUserExitResult(000, "Please validate the action for " + scrWFPurchOrd.getFieldValue() + ".");
@@ -271,6 +271,14 @@ public class POGetTareWeight extends VtiUserExit
 			ldbRowWeigh1.setFieldValue("WEIGHBRIDGE",scrCBBridge.getFieldValue());
 			ldbRowWeigh1.setFieldValue("TRUCKREG",scrRegNo.getFieldValue());
 			ldbRowWeigh1.setFieldValue("VTIREFA",scrVRef.getFieldValue());
+			
+			
+			if(sessionHeader.getFunctionId().equalsIgnoreCase("YSWB_WEIGH_COMP"))
+			{
+				ldbRowWeigh1.setFieldValue("ORIGIN",scrTblItems.getTopRow().getFieldValue("ORIGIN"));
+			}
+			
+			
 			ldbRowWeigh1.setFieldValue("TIMESTAMP","");
 			
 			try

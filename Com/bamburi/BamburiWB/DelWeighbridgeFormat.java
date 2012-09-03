@@ -95,7 +95,7 @@ public class DelWeighbridgeFormat extends VtiUserExit
 		
 		Date now = new Date();
 		long slipNo = 0;
-		long allocWgh = 0;
+		double allocWgh = 0;
 		String icStatus ="";
 		String whBridge ="";
 		String packerLD = null; 
@@ -521,67 +521,19 @@ public class DelWeighbridgeFormat extends VtiUserExit
 		if(icItemsLdbRows.length == 0)
 			return new VtiUserExitResult(999,"No Purchase Order items.");	
 		int wghR = 0;
+		int icProd = 0;
 		
 		while(icItemsLdbRows.length != wghR)
 		{
 			if(icItemsLdbRows[wghR].getFieldValue("MEINS").equalsIgnoreCase("TO"))
 			{
-				allocWgh = allocWgh + icItemsLdbRows[wghR].getLongFieldValue("LFIMG");
+				allocWgh = allocWgh + icItemsLdbRows[wghR].getDoubleFieldValue("LFIMG");
+				icProd++;
 				
 			}
 			wghR++;
 		}
-		
-		int p10 = 0;
-		int p20 = 0;
-		int p30 = 0;
-		int p40 = 0;
-		int p50 = 0;
-		int pCheck = 10;
-		int qDiv = 0;
-		int pRecs = 0;
-			
-		while(pCheck <= 60)
-		{
-			VtiExitLdbSelectCriterion [] packingQSelConds = 
-				{
-					new VtiExitLdbSelectCondition("SERVERGRP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
-						new VtiExitLdbSelectCondition("SERVERID", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerId()),
-							new VtiExitLdbSelectCondition("VBELN", VtiExitLdbSelectCondition.EQ_OPERATOR, scrWFDelOrd.getFieldValue()),
-								new VtiExitLdbSelectCondition("POSNR", VtiExitLdbSelectCondition.EQ_OPERATOR, Integer.toString(pCheck)),
-									new VtiExitLdbSelectCondition("TRUCKREG", VtiExitLdbSelectCondition.EQ_OPERATOR, scrRegNo.getFieldValue()),
-								new VtiExitLdbSelectCondition("DEL_IND", VtiExitLdbSelectCondition.NE_OPERATOR, "X")
-				};
-      
-			VtiExitLdbSelectConditionGroup packingQSelCondGrp = new VtiExitLdbSelectConditionGroup(packingQSelConds, true);
-
-			VtiExitLdbTableRow[] packingQTLdbRows = packingLdbTable.getMatchingRows(packingQSelCondGrp);
-			
-			if(pCheck == 10)
-				p10 = packingQTLdbRows.length;
-			if(pCheck == 20)
-				p20 = packingQTLdbRows.length;
-			if(pCheck == 30)
-				p30 = packingQTLdbRows.length;
-			if(pCheck == 40)
-				p40 = packingQTLdbRows.length;
-			if(pCheck == 50)
-				p50 = packingQTLdbRows.length;
-			
-			pCheck = pCheck + 10;
-		}
-		
-		if(p10>0)
-			pRecs = p10;
-		if(p20>0 && p20>pRecs)
-			pRecs = p20;
-		if(p30>0 && p30>pRecs)
-			pRecs = p30;
-		if(p40>0 && p40>pRecs)
-			pRecs = p40;
-		if(p50>0 && p50>pRecs)
-			pRecs = p50;
-		
+				
 		VtiExitLdbSelectCriterion [] packingSelConds = 
 			{
 				new VtiExitLdbSelectCondition("SERVERGRP", VtiExitLdbSelectCondition.EQ_OPERATOR, getServerGroup()),
@@ -607,25 +559,6 @@ public class DelWeighbridgeFormat extends VtiUserExit
 					
 		if(!isBulk)
 		{
-			if(pRecs == 0)
-			{
-					if(scrRBWeigh2.getFieldValue().equalsIgnoreCase("X"))
-					{
-						btnOk.setHiddenFlag(true);
-						btnReject.setHiddenFlag(true);
-						btnSave.setHiddenFlag(true);
-						btnTare.setHiddenFlag(true);
-						return new VtiUserExitResult(999,"No packing done for order items.");
-					}
-			}
-			else
-			{
-				packerLD = packingTLdbRows[packingTLdbRows.length-1].getFieldValue("PACKER"); 
-				shiftLD = packingTLdbRows[packingTLdbRows.length-1].getFieldValue("SHIFT"); 
-				packingLine = packingTLdbRows[packingTLdbRows.length-1].getFieldValue("QUEUENO"); 
-			}
-		
-		
 				int wbRecs = 0;
 
 				VtiExitLdbSelectCriterion [] wbRecSelConds = 
@@ -649,15 +582,30 @@ public class DelWeighbridgeFormat extends VtiUserExit
 					//if(wbRecLdbRows[wbRecLdbRows.length - 1].getFieldValue("STATUS").equalsIgnoreCase("REJECTED"))
 						//wbRecs++;
 				
-					if(wbRecs > pRecs)
+					double wbRecords = wbRecLdbRows.length;
+					double packRecords =  packingTLdbRows.length;
+					double packDone = (wbRecords * icProd) / packRecords;
+					
+					Log.trace(1,wbRecords + " * " + icProd + " / " + packRecords  + " = " + (wbRecords * icProd) / packRecords);
+					Log.trace(1,(wbRecLdbRows.length * icProd)  + " > " + packRecords);
+					
+					if(packDone != 1  &&  (wbRecLdbRows.length * icProd) > packingTLdbRows.length)
 					{
 							btnOk.setHiddenFlag(true);
 							btnReject.setHiddenFlag(true);
 							btnSave.setHiddenFlag(true);
 							btnTare.setHiddenFlag(true);
-							return new VtiUserExitResult(999,"This truck has been weighed " + wbRecs + " times, but only packed " + pRecs + " times.");
+							return new VtiUserExitResult(999,"This truck has been weighed " + wbRecs + " times, but only packed " + (packingTLdbRows.length /  icProd)+ " times.");
 					}
 				}
+
+				if(packingTLdbRows.length > 0)
+				{
+					packerLD = packingTLdbRows[packingTLdbRows.length-1].getFieldValue("PACKER"); 
+					shiftLD = packingTLdbRows[packingTLdbRows.length-1].getFieldValue("SHIFT"); 
+					packingLine = packingTLdbRows[packingTLdbRows.length-1].getFieldValue("QUEUENO"); 
+				}
+			
 		}
 		
 			VtiExitLdbSelectCriterion [] qSelConds = 
@@ -747,7 +695,7 @@ public class DelWeighbridgeFormat extends VtiUserExit
 		 scrNoAxels.setFieldValue( wbRegisterLdbRows[0].getFieldValue("NOAXELS"));
 		 transprtr.setFieldValue("FIELDVALUE",wbRegisterLdbRows[0].getFieldValue("COMPANY"));
 		 tranType.setFieldValue("FIELDVALUE",wbRegisterLdbRows[0].getFieldValue("TRANSTYPE"));
-		 allwgh.setFieldValue("FIELDVALUE",Long.toString(allocWgh * 1000)); 
+		 allwgh.setFieldValue("FIELDVALUE",Double.toString(allocWgh * 1000)); 
 		 
 		 if(scrRBWeigh2.getFieldValue().equalsIgnoreCase("X"))
 		 {
@@ -761,6 +709,6 @@ public class DelWeighbridgeFormat extends VtiUserExit
 			 shift.setFieldValue("FIELDVALUE",shiftLD);
 		 remarks.setFieldValue("FIELDVALUE","");
 		 
-	return new VtiUserExitResult();
+		return new VtiUserExitResult();
 	}
 }

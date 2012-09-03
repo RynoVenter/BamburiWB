@@ -48,11 +48,11 @@ public class RefreshArrive extends VtiUserExit
 		
 			try
 			{
-				Thread.sleep(500);
+				Thread.sleep(2000);
 			}
 			catch(InterruptedException ie)
 			{
-				Log.error("Thread.sleep(200) failed ", ie);		
+				Log.error("Thread.sleep(2000) failed ", ie);		
 			}
 					
 		try
@@ -63,6 +63,16 @@ public class RefreshArrive extends VtiUserExit
 				dbCall.ldbRefresh("YSWB_SO_ITEMS", this);
 				dbCall.ldbRefresh("YSWB_PO_HEADER", this);
 				dbCall.ldbRefresh("YSWB_PO_ITEMS", this);
+				
+				try
+				{
+					Thread.sleep(2000);
+				}
+				catch(InterruptedException ie)
+				{
+					Log.error("Thread.sleep(2000) failed ", ie);		
+				}
+				
 				dbCall.ldbRefreshOnly("YSWB_GATEPASS", this);
 				dbCall.ldbDownload("YSWB_IC_HEADER", this);
 				dbCall.ldbDownload("YSWB_IC_ITEMS", this);
@@ -84,10 +94,10 @@ public class RefreshArrive extends VtiUserExit
 			}
 			catch(InterruptedException ie)
 			{
-				Log.error("Thread.sleep(200) failed ", ie);		
+				Log.error("Thread.sleep(2000) failed ", ie);		
 			}
 					
-		return new VtiUserExitResult();
+		return new VtiUserExitResult(0,1,"Refresh started.");
 		
 	}
 }

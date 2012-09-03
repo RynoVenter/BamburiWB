@@ -91,13 +91,13 @@ public class POProcessTruckWeigh extends VtiUserExit
 		
 		String currLdbDate = DateFormatter.format("yyyyMMdd", currNow);
 		String currLdbTime = DateFormatter.format("HHmmss", currNow);
-		float w1 = 0;
-		float w2 = 0;
-		float nett = 0;
+		double w1 = 0;
+		double w2 = 0;
+		double nett = 0;
 		String weighTS = currDate + " " + currTime;
 		String currStatus = "";
 		String errorMsg ="";
-		float gateWeight = 0;
+		double gateWeight;
 		
 		boolean isTransfer = false;
 		String docType = "EBELN";
@@ -349,20 +349,20 @@ public class POProcessTruckWeigh extends VtiUserExit
 			{
 				if(scrFWeight.getFieldValue().length() == 0 && scrFWeight1.getFieldValue().length() == 0)
 					return new VtiUserExitResult(999, "No weight retrieved from weigh bridge.");
-				scrFWeight1.setFieldValue(scrFWeight.getFieldValue() + scrFWeight1.getFieldValue());
+				scrFWeight1.setIntegerFieldValue(scrFWeight.getIntegerFieldValue() + scrFWeight1.getIntegerFieldValue());
 				scrFWTStamp1.setFieldValue(weighTS);
 				return new VtiUserExitResult(999, "Partial weight collected, move truck and take the next weight. Remember to select ''Full'' when taking the last weight.");
 			}
 			
 			if(scrRBFull.getFieldValue().equalsIgnoreCase("X") && scrFWeight1.getFieldValue().length()!=0)
 			{
-				scrFWeight1.setFieldValue(scrFWeight.getFieldValue() + scrFWeight1.getFieldValue());
+				scrFWeight1.setIntegerFieldValue(scrFWeight.getIntegerFieldValue() + scrFWeight1.getIntegerFieldValue());
 				scrFWTStamp1.setFieldValue(weighTS);
 			}
 			
 			if(scrRBFull.getFieldValue().equalsIgnoreCase("X") && scrFWeight1.getFieldValue().length()==0)
 			{
-				scrFWeight1.setFieldValue(scrFWeight.getFieldValue());			
+				scrFWeight1.setIntegerFieldValue(scrFWeight.getIntegerFieldValue());			
 				scrFWTStamp1.setFieldValue(weighTS);
 			}
 			
@@ -400,7 +400,7 @@ public class POProcessTruckWeigh extends VtiUserExit
 					if(axleVariance > 0)
 						maxLegalWght = (maxLegalWght * axleVariance) / 100 + maxLegalWght;
 					
-					if(maxLegalWght < scrFWeight1.getFloatFieldValue())
+					if(maxLegalWght < scrFWeight1.getDoubleFieldValue())
 					{
 						return new VtiUserExitResult(999, "The Gross Vehicle Weight exceeds the legal axle weight for this truck by " + (scrFWeight1.getIntegerFieldValue() - maxLegalWght));
 					}
@@ -585,7 +585,7 @@ public class POProcessTruckWeigh extends VtiUserExit
 			//Update PO header and Item with new PO levels from SAP
 			
 			//Update Header	
-			if(scrSAPPoWght.getDoubleFieldValue() > poHeaderTWLdbRows[0].getDoubleFieldValue("LSMENGE"))
+			if(scrSAPPoWght.getDoubleFieldValue() > poHeaderTWLdbRows[0].getDoubleFieldValue("LSMENGE") && !sessionHeader.getFunctionId().equalsIgnoreCase("YSWB_WEIGH_COMP"))
 			{
 				poHeaderTWLdbRows[0].setFieldValue("MENGE", scrSAPPoWght.getFieldValue());
 				poHeaderTWLdbRows[0].setFieldValue("TIMESTAMP","");
@@ -601,18 +601,22 @@ public class POProcessTruckWeigh extends VtiUserExit
 			}
 			
 			//Update Item
-			poItemsTWLdbRows[0].setFieldValue("KTMNG",scrSAPPoWght.getDoubleFieldValue());	
-			if(scrSAPPoWght.getDoubleFieldValue() > poItemsTWLdbRows[0].getDoubleFieldValue("MENGE"))
-				poItemsTWLdbRows[0].setFieldValue("MENGE", scrSAPPoWght.getFieldValue());
-			poItemsTWLdbRows[0].setFieldValue("TIMESTAMP","");
+			if(!sessionHeader.getFunctionId().equalsIgnoreCase("YSWB_WEIGH_COMP"))
+			{
+				poItemsTWLdbRows[0].setFieldValue("KTMNG",scrSAPPoWght.getDoubleFieldValue());	
+				if(scrSAPPoWght.getDoubleFieldValue() > poItemsTWLdbRows[0].getDoubleFieldValue("MENGE"))
+					poItemsTWLdbRows[0].setFieldValue("MENGE", scrSAPPoWght.getFieldValue());
 			
-			try
-			{
-				poItemsTWLdbTable.saveRow( poItemsTWLdbRows[0]);
-			}
-			catch (VtiExitException ie)
-			{
-				return new VtiUserExitResult(999,1,"PO item was not updated witht he latest quantity levels from SAP.");
+				poItemsTWLdbRows[0].setFieldValue("TIMESTAMP","");
+			
+				try
+				{
+					poItemsTWLdbTable.saveRow( poItemsTWLdbRows[0]);
+				}
+				catch (VtiExitException ie)
+				{
+					return new VtiUserExitResult(999,1,"PO item was not updated witht he latest quantity levels from SAP.");
+				}
 			}
 					
 		}
@@ -622,20 +626,20 @@ public class POProcessTruckWeigh extends VtiUserExit
 			{
 				if(scrFWeight.getFieldValue().length() == 0 && scrFWeight2.getFieldValue().length() == 0)
 					return new VtiUserExitResult(999, "No weight retrieved from weigh bridge.");
-				scrFWeight2.setFieldValue(scrFWeight.getFieldValue() + scrFWeight2.getFieldValue());
+				scrFWeight2.setIntegerFieldValue(scrFWeight.getIntegerFieldValue() + scrFWeight2.getIntegerFieldValue());
 				scrFWTStamp2.setFieldValue(weighTS);
 				return new VtiUserExitResult(999, "Partial weight collected, move truck and take the next weight. Remeber to select Full when taking the last weight..");
 			}
 			
 			if(scrRBFull.getFieldValue().equalsIgnoreCase("X") && scrFWeight2.getFieldValue().length()!=0)
 			{
-				scrFWeight2.setFieldValue(scrFWeight.getFieldValue() + scrFWeight2.getFieldValue());
+				scrFWeight2.setIntegerFieldValue(scrFWeight.getIntegerFieldValue() + scrFWeight2.getIntegerFieldValue());
 				scrFWTStamp2.setFieldValue(weighTS);
 			}
 			
 			if(scrRBFull.getFieldValue().equalsIgnoreCase("X") && scrFWeight2.getFieldValue().length()==0)
 			{
-				scrFWeight2.setFieldValue(scrFWeight.getFieldValue());	
+				scrFWeight2.setIntegerFieldValue(scrFWeight.getIntegerFieldValue());	
 				scrFWTStamp2.setFieldValue(weighTS);
 			}
 			
@@ -644,7 +648,7 @@ public class POProcessTruckWeigh extends VtiUserExit
 			{
 				if(scrFWeight.getFieldValue().length() == 0 && scrFWeight2.getFieldValue().length() == 0)
 					return new VtiUserExitResult(999, "No weight retrieved from weigh bridge.");
-				scrFWeight2.setFieldValue(scrFWeight.getFieldValue());
+				scrFWeight2.setIntegerFieldValue(scrFWeight.getIntegerFieldValue());
 				scrFWTStamp2.setFieldValue(weighTS);
 			}
 			//Check if the packing was done
@@ -745,7 +749,7 @@ public class POProcessTruckWeigh extends VtiUserExit
 						maxLegalWght = (maxLegalWght * axleVariance) / 100 + maxLegalWght;
 					}
 				
-					if(maxLegalWght < scrFWeight2.getFloatFieldValue())
+					if(maxLegalWght < scrFWeight2.getDoubleFieldValue())
 					{
 						return new VtiUserExitResult(999, "The Gross Vehicle Weight exceeds the legal axle weight for this truck by " + (scrFWeight2.getIntegerFieldValue() - maxLegalWght));
 					}
@@ -822,17 +826,17 @@ public class POProcessTruckWeigh extends VtiUserExit
 
 									if(gateLdbRows.length == 0)
 									{
-										gateWeight = 0;
+										gateWeight = 0d;
 									}
 									else
 									{
 										
-										gateWeight = gateLdbRows[0].getFloatFieldValue("MENGE");
+										gateWeight = gateLdbRows[0].getDoubleFieldValue("MENGE") * 1000;
 										//set gate weight as allocweight
-										allwgh.setFieldValue("FIELDVALUE",Double.toString(gateWeight*1000)); 
+										allwgh.setStringFieldValue("FIELDVALUE",Double.toString(gateWeight)); 
 										//allocweight set
-										float overTol = 0F;
-										float underTol = 0F;
+										double overTol = 0D;
+										double underTol = 0D;
 								
 										if((overTol + underTol) == 0)
 										{
@@ -873,24 +877,27 @@ public class POProcessTruckWeigh extends VtiUserExit
 													return new VtiUserExitResult (999,"Order tolerance upper limit not determined.");		
 												}
 			
-											overTol= configUTolLdbRows[0].getFloatFieldValue("KEYVAL2");
-											underTol = configLTolLdbRows[0].getFloatFieldValue("KEYVAL2");
+											overTol= configUTolLdbRows[0].getDoubleFieldValue("KEYVAL2");
+											underTol = configLTolLdbRows[0].getDoubleFieldValue("KEYVAL2");
 											
 										}
 			
-										float tol = overTol + underTol;			
-										float poItemWht =0;
+										double tol = overTol + underTol;			
+										double poItemWht = 0;
 				
-										float underWTol = 0;
-										float overWTol = 0;
+										double underWTol = 0;
+										double overWTol = 0;
 				
 										
 				
-										poItemWht = gateWeight * 1000;
-										w1 = scrFWeight1.getFloatFieldValue();
-										w2 = scrFWeight2.getFloatFieldValue();
+										poItemWht = gateWeight; //* 1000;
+										w1 = scrFWeight1.getDoubleFieldValue();
+										w2 = scrFWeight2.getDoubleFieldValue();
 										
-				
+										Log.trace(0,"Weigh 1 = " + w1);
+										Log.trace(0,"Weigh 2 = " + w2);
+										Log.trace(0,"Gate Pass = " + poItemWht);
+										
 										if(w2 > w1)
 										{
 											nett = w2 - w1;
@@ -899,7 +906,14 @@ public class POProcessTruckWeigh extends VtiUserExit
 									
 												underWTol = poItemWht - poItemWht * underTol;
 												
+												Log.trace(0, "Under weight value = " + underWTol);
+												
 												overWTol = poItemWht * overTol + poItemWht;
+												
+												Log.trace(0, "Over weight value = " + overWTol);
+												
+												Log.trace(0, "Nett Weight = " + nett);
+												
 												if(nett < underWTol)
 												{
 													scrFWeight2.setFieldValue("");
@@ -907,6 +921,7 @@ public class POProcessTruckWeigh extends VtiUserExit
 													scrFNettW.setFieldValue("");
 													scrFNettTS.setFieldValue("");
 													scfTolWarning.setHiddenFlag(false);
+													Log.trace(0, "Nett Weight out of tolerance after W2.");
 													return new VtiUserExitResult(999,"Nett weight is under order weight by " + (underWTol - nett));
 												}
 				
@@ -964,8 +979,8 @@ public class POProcessTruckWeigh extends VtiUserExit
 				
 				
 				//Calculate Nettweight and write to screen
-				w1 = scrFWeight1.getFloatFieldValue();
-				w2 = scrFWeight2.getFloatFieldValue();
+				w1 = scrFWeight1.getDoubleFieldValue();
+				w2 = scrFWeight2.getDoubleFieldValue();
 				
 				nett = w1 - w2;
 				
@@ -978,7 +993,7 @@ public class POProcessTruckWeigh extends VtiUserExit
 				
 				
 				//Save Nett Weight
-				ldbRowWeigh2[0].setFloatFieldValue("NETTWEIGHT", nett);
+				ldbRowWeigh2[0].setFieldValue("NETTWEIGHT", nett);
 				ldbRowWeigh2[0].setFieldValue("NETTWEIGHT_T", currLdbTime);
 				ldbRowWeigh2[0].setFieldValue("TIMESTAMP", "");
 			

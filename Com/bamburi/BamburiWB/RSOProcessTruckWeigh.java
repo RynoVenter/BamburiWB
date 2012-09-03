@@ -66,9 +66,9 @@ public class RSOProcessTruckWeigh extends VtiUserExit
 		
 		String currLdbDate = DateFormatter.format("yyyyMMdd", currNow);
 		String currLdbTime = DateFormatter.format("HHmmss", currNow);
-		long w1 = 0;
-		long w2 = 0;
-		long nett = 0;
+		float w1 = 0;
+		float w2 = 0;
+		float nett = 0;
 		
 		
 		DBCalls dbCall = new DBCalls();
@@ -285,20 +285,20 @@ public class RSOProcessTruckWeigh extends VtiUserExit
 			{
 				if(scrFWeight.getFieldValue().length() == 0 && scrFWeight1.getFieldValue().length() == 0)
 					return new VtiUserExitResult(999, "No weight retrieved from weigh bridge.");
-				scrFWeight1.setFieldValue(scrFWeight.getFieldValue() + scrFWeight1.getFieldValue());
+				scrFWeight1.setIntegerFieldValue(scrFWeight.getIntegerFieldValue() + scrFWeight1.getIntegerFieldValue());
 				scrFWTStamp1.setFieldValue(weighTS);
 				return new VtiUserExitResult(999, "Partial weight collected, move truck and take the next weight. Remeber to select Full when taking the last weight.");
 			}
 			
 			if(scrRBFull.getFieldValue().equalsIgnoreCase("X") && scrFWeight1.getFieldValue().length()!=0)
 			{
-				scrFWeight1.setFieldValue(scrFWeight.getFieldValue() + scrFWeight1.getFieldValue());
+				scrFWeight1.setIntegerFieldValue(scrFWeight.getIntegerFieldValue() + scrFWeight1.getIntegerFieldValue());
 				scrFWTStamp1.setFieldValue(weighTS);
 			}
 			
 			if(scrRBFull.getFieldValue().equalsIgnoreCase("X") && scrFWeight1.getFieldValue().length()==0)
 			{
-				scrFWeight1.setFieldValue(scrFWeight.getFieldValue());
+				scrFWeight1.setIntegerFieldValue(scrFWeight.getIntegerFieldValue());
 				scrFWTStamp1.setFieldValue(weighTS);
 			}
 			
@@ -307,7 +307,7 @@ public class RSOProcessTruckWeigh extends VtiUserExit
 			{
 				if(scrFWeight.getFieldValue().length() == 0 && scrFWeight1.getFieldValue().length() == 0)
 					return new VtiUserExitResult(999, "No weight retrieved from weigh bridge.");
-				scrFWeight1.setFieldValue(scrFWeight.getFieldValue());
+				scrFWeight1.setIntegerFieldValue(scrFWeight.getIntegerFieldValue());
 				scrFWTStamp1.setFieldValue(weighTS);
 			}
 			
@@ -753,7 +753,7 @@ public class RSOProcessTruckWeigh extends VtiUserExit
 				return new VtiUserExitResult(999,1,"This Gross Vehicle Weight exceeds the legal axle weight for this truck by " +  (scrFWeight2.getIntegerFieldValue() - maxLegalWght) + ".");
 			
 			//Save Nett Weight
-			ldbRowWeigh2[0].setLongFieldValue("NETTWEIGHT", nett);
+			ldbRowWeigh2[0].setFloatFieldValue("NETTWEIGHT", nett);
 			ldbRowWeigh2[0].setFieldValue("NETTWEIGHT_T", currLdbTime);
 			ldbRowWeigh2[0].setFieldValue("TIMESTAMP", "");
 			
@@ -950,13 +950,13 @@ public class RSOProcessTruckWeigh extends VtiUserExit
 					}
 				}
 				
-				long soIW = 0;
-				long pIW = 0;
+				float soIW = 0;
+				float pIW = 0;
 				
 				
 				for(int ip = 0;ip < soItemsTWLdbRows.length;ip++)
 				{
-					soIW = soIW + soItemsTWLdbRows[ip].getLongFieldValue("NTGEW") * 1000;
+					soIW = soIW + soItemsTWLdbRows[ip].getFloatFieldValue("NTGEW") * 1000;
 						
 						VtiExitLdbSelectCriterion [] packSelConds = 
 					{
@@ -1088,7 +1088,7 @@ public class RSOProcessTruckWeigh extends VtiUserExit
 
 			
 				//Save Nett Weight
-				ldbRowWeigh2VBELN[0].setLongFieldValue("NETTWEIGHT", nett);
+				ldbRowWeigh2VBELN[0].setFloatFieldValue("NETTWEIGHT", nett);
 				ldbRowWeigh2VBELN[0].setFieldValue("NETTWEIGHT_T", currLdbTime);
 				ldbRowWeigh2VBELN[0].setFieldValue("TIMESTAMP", "");
 			
@@ -1106,7 +1106,7 @@ public class RSOProcessTruckWeigh extends VtiUserExit
 			
 			nett = w2 - w1;
 			
-			ldbRowWeigh2[0].setLongFieldValue("NETTWEIGHT", nett);
+			ldbRowWeigh2[0].setFloatFieldValue("NETTWEIGHT", nett);
 			ldbRowWeigh2[0].setFieldValue("NETTWEIGHT_T", currLdbTime);
 			ldbRowWeigh2[0].setFieldValue("TIMESTAMP", "");
 			

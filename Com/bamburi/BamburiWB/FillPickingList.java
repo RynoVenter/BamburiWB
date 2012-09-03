@@ -567,7 +567,7 @@ public class FillPickingList extends VtiUserExit
 			double timeStampMin5m = timeStampNow - 500000000;
 			String timeStampMin5Months = Double.toString(timeStampMin5m);
 			long bagsUoM = 0;
-			long gateWeight = 0;
+			double gateWeight = 0;
 			long bags = 0;
 			String packDocType = "";
 			String sErrorMsg = null;

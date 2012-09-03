@@ -19,12 +19,12 @@ public class POWeighbridgeFormat extends VtiUserExit
 		String currLdbDate = DateFormatter.format("yyyyMMdd", now);
 		String currLdbTime = DateFormatter.format("HHmmss", now);
 		long slipNo = 0;
-		long allocWgh = 0;
+		double allocWgh = 0;
 		boolean reqPack = false;
 		String poStatus ="";
 		String whBridge ="";
 		String packerLD = ""; 
-		String shiftLD = ""; 
+		String shiftLD = "";  
 		String packingLine = ""; 
 		FormatUtilities fu = new FormatUtilities();
 		boolean isTransfer = false;
@@ -327,6 +327,7 @@ Log.trace(0,"doctype variable is " + docType);
 					if(Long.parseLong(currLdbDate+currLdbTime) > Long.parseLong(sbExpireTs.toString()) 
 					   && inspLdbRows[0].getFieldValue("EXPIRED").length() > 0)
 					{
+						sessionHeader.setNextFunctionId("YSWB_TRINBOUND");
 						return new VtiUserExitResult(999,1,"Inspection has expired for this truck.");
 					}
 					else if(Long.parseLong(currLdbDate+currLdbTime) > Long.parseLong(sbExpireTs.toString())
@@ -453,12 +454,19 @@ Log.trace(0,"doctype variable is " + docType);
 			scrFWTStamp1.setFieldValue(fu.shortDate(wbLdbRows[0].getFieldValue("WEIGHT1_D")) + " " + fu.shortTime(wbLdbRows[0].getFieldValue("WEIGHT1_T")));
 		}
 		
+		Log.trace(0, "Prepping to update data to screen for weigh 2 or complete status");
+		Log.trace(0, "PO Status is " + poStatus);
+		Log.trace(0, "RB selected is w1" + scrRBWeigh1.getFieldValue());
+		Log.trace(0, "RB selected is w2" + scrRBWeigh2.getFieldValue());
+		
 		if(!scrRBWeigh1.getFieldValue().equalsIgnoreCase("X") && poStatus.equalsIgnoreCase("Weigh 2") 
 				|| !scrRBWeigh1.getFieldValue().equalsIgnoreCase("X") && poStatus.equalsIgnoreCase("Complete")
 				|| !scrRBWeigh1.getFieldValue().equalsIgnoreCase("X") && poStatus.substring(0,1).equalsIgnoreCase("0")
 				|| !scrRBWeigh1.getFieldValue().equalsIgnoreCase("X") && poStatus.equalsIgnoreCase("SAP ERROR")) 
 				
 		{	
+			
+			
 		
 				VtiExitLdbSelectCriterion [] wbASelConds = 
 				{
@@ -658,7 +666,7 @@ Log.trace(0,"doctype variable is " + docType);
 		{
 			if(poItemsLdbRows[wghR].getFieldValue("MEINS").equalsIgnoreCase("TO"))
 			{
-				allocWgh = allocWgh + poItemsLdbRows[wghR].getLongFieldValue("MENGE");
+				allocWgh = allocWgh + poItemsLdbRows[wghR].getDoubleFieldValue("MENGE");
 				
 			}
 			
@@ -689,11 +697,11 @@ Log.trace(0,"doctype variable is " + docType);
 
 				if(gateLdbRows.length == 0)
 				{
-					allocWgh = 0;
+					allocWgh = 0d;
 				}
 				else
 				{
-					allocWgh = gateLdbRows[0].getLongFieldValue("MENGE");
+					allocWgh = gateLdbRows[0].getDoubleFieldValue("MENGE");
 					
 				}
 				
@@ -862,7 +870,7 @@ Log.trace(0,"Bridge for " + scrWFPurchOrd.getFieldValue() + " was not determined
 		 {
 			 return new VtiUserExitResult(000, "Previous registration already archived. No custom detail.");
 		 }
-		 allwgh.setFieldValue("FIELDVALUE",Long.toString(allocWgh * 1000)); 
+		 allwgh.setStringFieldValue("FIELDVALUE",Double.toString(allocWgh * 1000)); 
 		 packline.setFieldValue("FIELDVALUE",packingLine);
 		 remarks.setFieldValue("FIELDVALUE","");
 		 shift.setFieldValue("FIELDVALUE",shiftLD);

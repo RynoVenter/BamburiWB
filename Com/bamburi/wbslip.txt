@@ -1,0 +1,30 @@
+
+
+
+
+
+
+
+
+	
+	Order #		:  &onum& 
+	Slip Time 	:  &soTime&	 
+	Slip Number	:  &slipN&
+ 
+	Truck Number	:  &truck&				   
+	Cust - Supp	:  &cust&
+	Transport 	:  &trnsprt&
+	Type		:  &pType&	   
+	Allocated Whgt	:  &allocWght&
+
+	Product		:  &product&
+	Packing Line : &pl&
+
+
+
+	&d1&  &t1&	1st Weight	&w1&   &wb1&	
+	&d2&  &t2&	2nd Weight	&w2&   &wb2&	
+   				NETT		&nett&  	 
+
+
+	Signature : &driver&		&user& Signature	 

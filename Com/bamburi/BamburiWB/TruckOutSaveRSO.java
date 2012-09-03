@@ -608,7 +608,7 @@ public class TruckOutSaveRSO extends VtiUserExit
 			
 				if(packNonDILdbRows.length == 0)
 				{
-					for(int nd = 0;nd < packDILdbRows.length;nd++)
+					for(int nd = 0;nd < packNonDILdbRows.length;nd++)
 					{
 						packNonDILdbRows[nd].setFieldValue("ISSUED","");
 						packNonDILdbRows[nd].setFieldValue("TIMESTAMP","");

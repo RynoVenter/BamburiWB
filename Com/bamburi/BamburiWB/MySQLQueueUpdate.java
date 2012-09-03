@@ -15,7 +15,7 @@ public class MySQLQueueUpdate extends VtiUserExit
 		DBCalls qUpdateCall = new DBCalls();
 		
 		qUpdateCall.ldbRefreshOnly("YSWB_QUEUE", this);
-		qUpdateCall.ldbRefreshOnly("YSWB_REGISTER", this);
+		qUpdateCall.ldbDownload("YSWB_REGISTER", this);
 					
 		return new VtiUserExitResult();
 	}

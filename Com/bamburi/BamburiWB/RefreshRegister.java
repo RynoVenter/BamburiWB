@@ -24,14 +24,34 @@ public class RefreshRegister extends VtiUserExit
 
 			if (hostConnected)
 			{ 
+				dbCall.ldbUpload("YSWB_IC_HEADER", this);
+				dbCall.ldbUpload("YSWB_IC_ITEMS", this);
 				dbCall.ldbUpload("YSWB_REGISTER", this);
-				dbCall.ldbUpload("YSWB_INSPECT", this);
+				try
+				{
+					Thread.sleep(2000);
+				}
+				catch (InterruptedException ie)
+				{
+				}
+				
+				
+				
 			
 				dbCall.ldbDownload("YSWB_PO_HEADER", this);
 				dbCall.ldbDownload("YSWB_PO_ITEMS", this);
 				dbCall.ldbDownload("YSWB_IC_HEADER", this);
 				dbCall.ldbDownload("YSWB_IC_ITEMS", this);
+				try
+				{
+					Thread.sleep(5000);
+				}
+				catch (InterruptedException ie)
+				{
+				}
+				
 				dbCall.ldbDownload("YSWB_GATEPASS", this);
+				dbCall.ldbUpload("YSWB_INSPECT", this);
 			}
 		}
 		catch (VtiExitException ee)
@@ -40,7 +60,7 @@ public class RefreshRegister extends VtiUserExit
 			return new VtiUserExitResult(999,"Unable to refresh.");
 		}
 		
-		return new VtiUserExitResult();
+		return new VtiUserExitResult(0,1,"Refresh started.");
 	}
 	
 }

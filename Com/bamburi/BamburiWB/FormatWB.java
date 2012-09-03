@@ -18,7 +18,7 @@ public class FormatWB extends VtiUserExit
 		if (versionIDField == null) return new VtiUserExitResult(999, "Error Retrieving Version Info");
 
 		//Set Class Version ( Hardcoded ) ( Change before every SAP Package role out )
-		versionIDField.setFieldValue("Version 5.02");
+		versionIDField.setFieldValue("Version 5.04");
 
 		
 		// Trigger the uploads to SAP, if a connection is available.
